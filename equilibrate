@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -euo pipefail
+
+findDifferences() {
+    path1=$1
+    path2=$2
+
+    echo "Files not found in $path2:"
+    find $path1 -type f | while read -r filePath
+    do
+
+    fileName="${filePath##*/}"
+    if [[ ${fileName:0:1} != '.' ]]; then
+        relativePath="${filePath##*$path1/}"
+        filePath2="$path2/$relativePath"
+
+        if [[ ! -e $filePath2 ]]; then
+            echo "$filePath"
+        fi
+    fi
+
+    done
+
+    echo
+    echo "-----------------"
+    echo
+
+    echo "Files not found in $path1:"
+    find $path2 -type f | while read -r filePath
+    do
+
+    fileName="${filePath##*/}"
+    if [[ ${fileName:0:1} != '.' ]]; then
+        relativePath="${filePath##*$path2/}"
+        filePath1="$path1/$relativePath"
+
+        if [[ ! -e $filePath1 ]]; then
+            echo "$filePath"
+        fi
+    fi
+
+    done
+}
+
+if [ $# -ne 2 ] ; then
+    echo "Usage: $0 path1 path2" >&2
+    exit 1
+fi
+
+findDifferences $1 $2
