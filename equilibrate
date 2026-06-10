@@ -7,7 +7,9 @@ findDifferences() {
     path2=$2
 
     echo "Files not found in $path2:"
-    find $path1 -type f | while read -r filePath
+    filesNotFoundInPath2=()
+    
+    while read -r filePath
     do
 
     fileName="${filePath##*/}"
@@ -16,18 +18,21 @@ findDifferences() {
         filePath2="$path2/$relativePath"
 
         if [[ ! -e $filePath2 ]]; then
+            filesNotFoundInPath2+=("$filePath")
             echo "$filePath"
         fi
     fi
 
-    done
+    done < <(find $path1 -type f)
 
     echo
     echo "-----------------"
     echo
 
     echo "Files not found in $path1:"
-    find $path2 -type f | while read -r filePath
+    filesNotFoundInPath1=()
+    
+    while read -r filePath
     do
 
     fileName="${filePath##*/}"
@@ -36,11 +41,12 @@ findDifferences() {
         filePath1="$path1/$relativePath"
 
         if [[ ! -e $filePath1 ]]; then
+            filesNotFoundInPath1+=("$filePath")
             echo "$filePath"
         fi
     fi
 
-    done
+    done < <(find $path2 -type f)
 }
 
 if [ $# -ne 2 ] ; then
