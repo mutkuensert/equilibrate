@@ -2,20 +2,37 @@
 
 set -euo pipefail
 
-findDifferences() {
-    path1=$1
-    path2=$2
+copyFilesToPath() {
+    local originParentDir=$1
+    local targetParentDir=$2
+    shift
+    shift
+    local originfilePaths=("$@")
 
-    echo "Files not found in $path2:"
-    filesNotFoundInPath2=()
+    for originFilePath in "${originfilePaths[@]}"; do
+        local relativeFilePath="${originFilePath##*$originParentDir/}"
+        local targetFilePath="$targetParentDir/$relativeFilePath"
+        local targetFileDir="${targetFilePath%/*}"
+
+        mkdir -p "$targetFileDir"
+        cp "$originFilePath" "$targetFilePath"
+    done
+}
+
+sync() {
+    parentDir1=$1
+    parentDir2=$2
+
+    echo "Files not found in $parentDir2:"
+    local filesNotFoundInPath2=()
     
     while read -r filePath
     do
 
-    fileName="${filePath##*/}"
+    local fileName="${filePath##*/}"
     if [[ ${fileName:0:1} != '.' ]]; then
-        relativePath="${filePath##*$path1/}"
-        filePath2="$path2/$relativePath"
+        local relativePath="${filePath##*$parentDir1/}"
+        local filePath2="$parentDir2/$relativePath"
 
         if [[ ! -e $filePath2 ]]; then
             filesNotFoundInPath2+=("$filePath")
@@ -23,22 +40,29 @@ findDifferences() {
         fi
     fi
 
-    done < <(find $path1 -type f)
+    done < <(find "$parentDir1" -type f)
+
+    if [[ ${#filesNotFoundInPath2[@]} -ne 0 ]]
+    then
+        copyFilesToPath "$parentDir1" "$parentDir2" "${filesNotFoundInPath2[@]}"
+    else
+        echo "$parentDir2 has all the files in $parentDir1."
+    fi
 
     echo
     echo "-----------------"
     echo
 
-    echo "Files not found in $path1:"
-    filesNotFoundInPath1=()
+    echo "Files not found in $parentDir1:"
+    local filesNotFoundInPath1=()
     
     while read -r filePath
     do
 
-    fileName="${filePath##*/}"
+    local fileName="${filePath##*/}"
     if [[ ${fileName:0:1} != '.' ]]; then
-        relativePath="${filePath##*$path2/}"
-        filePath1="$path1/$relativePath"
+        local relativePath="${filePath##*$parentDir2/}"
+        local filePath1="$parentDir1/$relativePath"
 
         if [[ ! -e $filePath1 ]]; then
             filesNotFoundInPath1+=("$filePath")
@@ -46,12 +70,24 @@ findDifferences() {
         fi
     fi
 
-    done < <(find $path2 -type f)
+    done < <(find "$parentDir2" -type f)
+
+    if [[ ${#filesNotFoundInPath1[@]} -ne 0 ]]
+    then
+        copyFilesToPath "$parentDir2" "$parentDir1" "${filesNotFoundInPath1[@]}"
+    else
+        echo "$parentDir1 has all the files in $parentDir2."
+    fi
+
+    echo
+    echo "------------"
+    echo "SYNCHRONIZED"
+    echo "------------"
 }
 
 if [ $# -ne 2 ] ; then
-    echo "Usage: $0 path1 path2" >&2
+    echo "Usage: $0 parentDir1 parentDir2" >&2
     exit 1
 fi
 
-findDifferences $1 $2
+sync $1 $2
