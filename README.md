@@ -57,12 +57,14 @@ Files not found in dir_2:
 dir_1/file_1.txt
 dir_1/notes/today.txt
 
+Copied 2 files
 -----------------
 
 Files not found in dir_1:
 dir_2/file_3.txt
 dir_2/drafts/idea.txt
 
+Copied 2 files
 ------------
 SYNCHRONIZED
 ------------

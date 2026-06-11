@@ -2,13 +2,20 @@
 
 set -euo pipefail
 
+clearLine() {
+    printf "\r\033[K"
+}
+
 copyFilesToPath() {
     local originParentDir=$1
     local targetParentDir=$2
     shift
     shift
     local originfilePaths=("$@")
+    local percent=0
+    local count=1
 
+    echo
     for originFilePath in "${originfilePaths[@]}"; do
         local relativeFilePath="${originFilePath##*"$originParentDir"/}"
         local targetFilePath="$targetParentDir/$relativeFilePath"
@@ -16,6 +23,16 @@ copyFilesToPath() {
 
         mkdir -p "$targetFileDir"
         cp "$originFilePath" "$targetFilePath"
+
+        (( percent = 100 * count / ${#originfilePaths[@]} ))
+        if (( count != ${#originfilePaths[@]}))
+        then
+            printf "\rCopying files... %d%% (%d/%d)" "$percent" "$count" "${#originfilePaths[@]}"
+        else
+            clearLine
+            printf "\rCopied %d files" "${#originfilePaths[@]}"
+        fi
+        (( count++ ))
     done
 }
 
@@ -26,6 +43,7 @@ sync() {
     echo "Files not found in $parentDir2:"
     local filesNotFoundInPath2=()
     
+    oldIFS=$IFS IFS=""
     while read -r filePath
     do
 
@@ -41,6 +59,7 @@ sync() {
     fi
 
     done < <(find "$parentDir1" -type f)
+    IFS=$oldIFS
 
     if [[ ${#filesNotFoundInPath2[@]} -ne 0 ]]
     then
@@ -56,6 +75,7 @@ sync() {
     echo "Files not found in $parentDir1:"
     local filesNotFoundInPath1=()
     
+    oldIFS=$IFS IFS=""
     while read -r filePath
     do
 
@@ -71,6 +91,7 @@ sync() {
     fi
 
     done < <(find "$parentDir2" -type f)
+    IFS=$oldIFS
 
     if [[ ${#filesNotFoundInPath1[@]} -ne 0 ]]
     then
