@@ -10,7 +10,7 @@ copyFilesToPath() {
     local originfilePaths=("$@")
 
     for originFilePath in "${originfilePaths[@]}"; do
-        local relativeFilePath="${originFilePath##*$originParentDir/}"
+        local relativeFilePath="${originFilePath##*"$originParentDir"/}"
         local targetFilePath="$targetParentDir/$relativeFilePath"
         local targetFileDir="${targetFilePath%/*}"
 
@@ -31,7 +31,7 @@ sync() {
 
     local fileName="${filePath##*/}"
     if [[ ${fileName:0:1} != '.' ]]; then
-        local relativePath="${filePath##*$parentDir1/}"
+        local relativePath="${filePath##*"$parentDir1"/}"
         local filePath2="$parentDir2/$relativePath"
 
         if [[ ! -e $filePath2 ]]; then
@@ -61,7 +61,7 @@ sync() {
 
     local fileName="${filePath##*/}"
     if [[ ${fileName:0:1} != '.' ]]; then
-        local relativePath="${filePath##*$parentDir2/}"
+        local relativePath="${filePath##*"$parentDir2"/}"
         local filePath1="$parentDir1/$relativePath"
 
         if [[ ! -e $filePath1 ]]; then
@@ -90,4 +90,4 @@ if [ $# -ne 2 ] ; then
     exit 1
 fi
 
-sync $1 $2
+sync "$1" "$2"
